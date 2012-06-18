@@ -21,9 +21,9 @@
            bodyStream:(NSInputStream*)bodyStream
           cachePolicy:(NSURLRequestCachePolicy)cachePolicy
       timeoutInterval:(NSTimeInterval)timeoutInterval
-       receiveHandler:(void (^)(id, NSNumber*))receiveHandler
+       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
-    void (^jsonReceiveHander)(id, NSNumber*) = ^(id data, NSNumber* statusCode) {
+    void (^jsonReceiveHander)(id, NSNumber*) = ^(id data, NSNumber* statusCode, NSDictionary *headers) {
         NSError *error = nil;
         id object = nil;
         if ([[self class] iOS5JSONSerialization]) {
@@ -32,7 +32,7 @@
             object = [[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease] JSONValue];
         }
         if (object) {
-            receiveHandler(object, statusCode);
+            receiveHandler(object, statusCode, headers);
         } else {
             errorHandler(error);
         }
@@ -53,11 +53,13 @@
                method:(NSString*)method
               headers:(NSDictionary*)headers
            jsonString:(NSString*)body
-       receiveHandler:(void (^)(id, NSNumber*))receiveHandler
+       receiveHandler:(void (^)(id, NSNumber*, NSDicationary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
+    NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
+    [newHeaders setObject:@"application/json" forKey:@"Content-Type"];
     [self requestWithURL:url
                   method:method
-                 headers:headers
+                 headers:newHeaders
                     body:[NSMutableData dataWithData:[body dataUsingEncoding:NSUTF8StringEncoding]]
           receiveHandler:receiveHandler
             errorHandler:errorHandler];
@@ -67,7 +69,7 @@
                method:(NSString*)method
               headers:(NSDictionary*)headers
              jsonData:(id)body
-       receiveHandler:(void (^)(id, NSNumber*))receiveHandler
+       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
     NSError *error = nil;
     NSData *bodyData = nil;
@@ -76,10 +78,12 @@
     } else {
       bodyData = [[body JSONRepresentation] dataUsingEncoding:NSUTF8StringEncoding];
     }
+    NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
+    [newHeaders setObject:@"application/json" forKey:@"Content-Type"];
     if (bodyData) {
         [self requestWithURL:url
                       method:method
-                     headers:headers
+                     headers:newHeaders
                         body:bodyData
               receiveHandler:receiveHandler
                 errorHandler:errorHandler];

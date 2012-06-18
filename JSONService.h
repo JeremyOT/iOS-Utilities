@@ -9,14 +9,14 @@
                method:(NSString*)method
               headers:(NSDictionary*)headers
            jsonString:(NSString*)body
-       receiveHandler:(void (^)(id, NSNumber*))receiveHandler
+       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler;
 
 -(void)requestWithURL:(NSURL*)url
                method:(NSString*)method
               headers:(NSDictionary*)headers
              jsonData:(id)body
-       receiveHandler:(void (^)(id, NSNumber*))receiveHandler
+       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler;
 
 @end
