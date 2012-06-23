@@ -23,7 +23,7 @@
       timeoutInterval:(NSTimeInterval)timeoutInterval
        receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
-    void (^jsonReceiveHander)(id, NSNumber*) = ^(id data, NSNumber* statusCode, NSDictionary *headers) {
+    void (^jsonReceiveHander)(id, NSNumber*, NSDictionary*) = ^(id data, NSNumber* statusCode, NSDictionary *headers) {
         NSError *error = nil;
         id object = nil;
         if ([[self class] iOS5JSONSerialization]) {
@@ -53,7 +53,7 @@
                method:(NSString*)method
               headers:(NSDictionary*)headers
            jsonString:(NSString*)body
-       receiveHandler:(void (^)(id, NSNumber*, NSDicationary*))receiveHandler
+       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
     [newHeaders setObject:@"application/json" forKey:@"Content-Type"];
