@@ -25,22 +25,22 @@
            bodyStream:(NSInputStream*)bodyStream
           cachePolicy:(NSURLRequestCachePolicy)cachePolicy
       timeoutInterval:(NSTimeInterval)timeoutInterval
-       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
-         errorHandler:(void (^)(NSError*))errorHandler;
+       receiveHandler:(void (^)(id response, NSNumber *status, NSDictionary *headers))receiveHandler
+         errorHandler:(void (^)(NSError *error))errorHandler;
 
 -(void)requestWithURL:(NSURL*)url
                method:(NSString*)method
               headers:(NSDictionary*)headers
            bodyStream:(NSInputStream*)bodyStream
-       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
-         errorHandler:(void (^)(NSError*))errorHandler;
+       receiveHandler:(void (^)(id response, NSNumber *status, NSDictionary *headers))receiveHandler
+         errorHandler:(void (^)(NSError *error))errorHandler;
 
 -(void)requestWithURL:(NSURL*)url
                method:(NSString*)method
               headers:(NSDictionary*)headers
                  body:(NSData*)body
-       receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
-         errorHandler:(void (^)(NSError*))errorHandler;
+       receiveHandler:(void (^)(id response, NSNumber *status, NSDictionary *headers))receiveHandler
+         errorHandler:(void (^)(NSError *error))errorHandler;
 
 - (void)cancel;
 
