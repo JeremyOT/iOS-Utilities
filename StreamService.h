@@ -15,9 +15,9 @@
 @property(nonatomic,copy) void (^progressHandler)(long long downloadedSize, long long expectedSize);
 
 -(id)initWithOutputStream:(NSOutputStream*)stream;
--(id)initWithOutputStream:(NSOutputStream*)stream progressHandler:(void (^)(long long, long long))progressHandler;
+-(id)initWithOutputStream:(NSOutputStream*)stream progressHandler:(void (^)(long long downloadedSize, long long expectedSize))progressHandler;
 
 +(id)serviceWithOutputStream:(NSOutputStream*)stream;
-+(id)serviceWithOutputStream:(NSOutputStream*)stream progressHandler:(void (^)(long long, long long))progressHandler;
++(id)serviceWithOutputStream:(NSOutputStream*)stream progressHandler:(void (^)(long long downloadedSize, long long expectedSize))progressHandler;
 
 @end
