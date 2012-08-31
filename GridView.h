@@ -24,6 +24,7 @@ typedef enum  {
 @protocol GridViewDataSource
 
 -(UIView*)gridView:(GridView*)gridView viewForItemAtIndex:(NSInteger)index;
+-(NSUInteger)numberOfTilesForGridView;
 
 @optional
 -(BOOL)gridViewShouldReload:(GridView*)gridView;

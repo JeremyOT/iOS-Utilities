@@ -15,7 +15,6 @@
 @property (nonatomic) dispatch_queue_t tileLoadingQueue;
 @property (nonatomic) BOOL loadRequested;
 @property (nonatomic) BOOL reloadRequested;
-@property (nonatomic,retain) UIView *loadingView;
 @property (nonatomic,retain) UIActivityIndicatorView *activityIndicator;
 @property (nonatomic) BOOL viewsLocked;
 @property (nonatomic, readonly) NSInteger lastVisibleIndex;
@@ -32,7 +31,6 @@
 @synthesize horizontalSpacing = _horizontalSpacing;
 @synthesize verticalSpacing = _verticalSpacing;
 @synthesize dataSource = _dataSource;
-@synthesize loadingView = _loadingView;
 @synthesize activityIndicator = _activityIndicator;
 @synthesize firstIndex = _firstIndex;
 @synthesize lastIndex = _lastIndex;
@@ -55,22 +53,9 @@
     _verticalSpacing = 4;
     _horizontalSpacing = 4;
     _bufferedScreenCount = 1;
-    _loadingView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 44, self.bounds.size.width)];
-    _loadingView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    _loadingView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    _loadingView.backgroundColor = [UIColor clearColor];
     _activityIndicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    _activityIndicator.frame = CGRectMake((_loadingView.bounds.size.width - _activityIndicator.bounds.size.width) / 2,
-                                          (_loadingView.bounds.size.height - _activityIndicator.bounds.size.height) / 2,
-                                          _activityIndicator.bounds.size.width,
-                                          _activityIndicator.bounds.size.height);
     _activityIndicator.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleTopMargin;
     _activityIndicator.hidesWhenStopped = YES;
-    [_loadingView addSubview:_activityIndicator];
-    _loadingView.hidden = NO;
-    _loadingView.alpha = 1;
-    _loadingView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-    [self addSubview:_loadingView];
     _rowCount = 3;
     _tileAspectRatio = 1.0;
     _orientation = GridViewOrientationVertical;
@@ -135,7 +120,9 @@
 -(id)dequeueReusableTileWithIdentifier:(NSString *)identifier {
     NSMutableArray *queuedTilesForIdentifier = [_queuedTiles objectForKey:identifier];
     id tile = [[queuedTilesForIdentifier lastObject] retain];
-    [queuedTilesForIdentifier removeLastObject];
+    if (tile) {
+        [queuedTilesForIdentifier removeLastObject];
+    }
     return [tile autorelease];
 }
 
@@ -169,15 +156,14 @@
 -(void)ensureContentSizeForRect:(CGRect)rect {
     switch (_orientation) {
         case GridViewOrientationHorizontal:
+            //TODO: (note:) this code doesn't appear to execute in AllRecipes
             if (self.contentSize.width < rect.origin.x + (rect.size.width * 2)) {
                 self.contentSize = CGSizeMake(rect.origin.x + (rect.size.width * 2), self.contentSize.height);
-                self.loadingView.frame = CGRectMake(self.contentSize.width - self.loadingView.frame.size.width, 0, self.loadingView.frame.size.width, self.bounds.size.height);
             }
             break;
         case GridViewOrientationVertical:
             if (self.contentSize.height < rect.origin.y + (rect.size.height * 2)) {
-                self.contentSize = CGSizeMake(self.contentSize.width, rect.origin.y + (rect.size.height * 2));
-                self.loadingView.frame = CGRectMake(0, self.contentSize.height - self.loadingView.frame.size.height, self.bounds.size.width, self.loadingView.frame.size.height);
+                self.contentSize = CGSizeMake(self.contentSize.width, rect.origin.y + rect.size.height + _verticalSpacing);
             }
         default:
             break;
@@ -200,65 +186,46 @@
             [self reloadData];
         } else {
             _loadingTiles = YES;
-            dispatch_async(_tileLoadingQueue, ^{
-                while (self.lastVisibleIndex > _lastIndex) {
-                    UIView *tile = [_dataSource gridView:self viewForItemAtIndex:_lastIndex + 1];
-                    if (tile) {
-                        _lastIndex++;
-                        [_tiles addObject:tile];
-                        dispatch_sync(dispatch_get_main_queue(), ^{
-                            tile.frame = [self frameForTileAtIndex:_lastIndex];
-                            [self ensureContentSizeForRect:tile.frame];
-                            [self addSubview:tile];
-                        });
-                    } else {
-                        dispatch_sync(dispatch_get_main_queue(), ^{
-                            _loadingView.hidden = YES;
-                        });
-                        break;
-                    }
-                }
-                while (self.firstVisibleIndex < _firstIndex) {
-                    UIView *tile = [_dataSource gridView:self viewForItemAtIndex:_firstIndex - 1];
-                    if (tile) {
-                        _firstIndex--;
-                        [_tiles insertObject:tile atIndex:0];
-                        dispatch_sync(dispatch_get_main_queue(), ^{
-                            tile.frame = [self frameForTileAtIndex:_firstIndex];
-                            [self addSubview:tile];
-                        });
-                    } else {
-                        break;
-                    }
-                }
-                dispatch_sync(dispatch_get_main_queue(), ^{
-                    while (_lastIndex > self.lastVisibleIndex) {
-                        id tile = [_tiles lastObject];
-                        [self enqueueReusableTile:tile];
-                        [tile removeFromSuperview];
-                        [_tiles removeLastObject];
-                        _lastIndex --;
-                    }
-                    while (_firstIndex < self.firstVisibleIndex) {
-                        id tile = [_tiles objectAtIndex:0];
-                        [self enqueueReusableTile:tile];
-                        [tile removeFromSuperview];
-                        [_tiles removeObjectAtIndex:0];
-                        _firstIndex ++;
-                    }
-                });
-                _loadingTiles = NO;
-                if (_loadRequested) {
-                    _loadRequested = NO;
-                    [self loadItems];
-                }
-            });
+            NSUInteger numTiles = [_dataSource numberOfTilesForGridView];
+            while ((self.lastVisibleIndex > _lastIndex) && (_lastIndex +1 < numTiles)) {
+                UIView *tile = [_dataSource gridView:self viewForItemAtIndex:_lastIndex + 1];
+                _lastIndex++;
+                [_tiles addObject:tile];
+                tile.frame = [self frameForTileAtIndex:_lastIndex];
+                [self ensureContentSizeForRect:tile.frame];
+                [self addSubview:tile];
+            }
+            while (self.firstVisibleIndex < _firstIndex) {
+                UIView *tile = [_dataSource gridView:self viewForItemAtIndex:_firstIndex - 1];
+                _firstIndex--;
+                [_tiles insertObject:tile atIndex:0];
+                tile.frame = [self frameForTileAtIndex:_firstIndex];
+                [self addSubview:tile];
+            }
+            while (_lastIndex > self.lastVisibleIndex) {
+                id tile = [_tiles lastObject];
+                [self enqueueReusableTile:tile];
+                [tile removeFromSuperview];
+                [_tiles removeLastObject];
+                _lastIndex --;
+            }
+            while (_firstIndex < self.firstVisibleIndex) {
+                id tile = [_tiles objectAtIndex:0];
+                [self enqueueReusableTile:tile];
+                [tile removeFromSuperview];
+                [_tiles removeObjectAtIndex:0];
+                _firstIndex ++;
+            }
+            _loadingTiles = NO;
+            if (_loadRequested) {
+                _loadRequested = NO;
+                [self loadItems];
+            }
         }
     }
 }
 
 -(void)clearTiles {
-    _loadingView.alpha = 1;
     [_activityIndicator startAnimating];
     _lastIndex = -1;
     _firstIndex = 0;
@@ -272,16 +239,12 @@
         case GridViewOrientationHorizontal: {
             CGFloat tileHeight = (self.bounds.size.height - ((_rowCount + 1) * _verticalSpacing)) / _rowCount;
             _tileSize = CGSizeMake(tileHeight * _tileAspectRatio, tileHeight);
-            _loadingView.frame = CGRectMake(self.contentSize.width - 44, 0, 44, self.bounds.size.height);
-            _loadingView.hidden = NO;
             break;
         }
         case GridViewOrientationVertical:
         default: {
             CGFloat tileWidth = (self.bounds.size.width - ((_rowCount + 1) * _horizontalSpacing)) / _rowCount;
             _tileSize = CGSizeMake(tileWidth, tileWidth / _tileAspectRatio);
-            _loadingView.frame = CGRectMake(0, self.contentSize.height - 44, self.bounds.size.width, 44);
-            _loadingView.hidden = NO;
         }
     }
 }
