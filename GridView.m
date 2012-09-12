@@ -156,7 +156,6 @@
 -(void)ensureContentSizeForRect:(CGRect)rect {
     switch (_orientation) {
         case GridViewOrientationHorizontal:
-            //TODO: (note:) this code doesn't appear to execute in AllRecipes
             if (self.contentSize.width < rect.origin.x + (rect.size.width * 2)) {
                 self.contentSize = CGSizeMake(rect.origin.x + (rect.size.width * 2), self.contentSize.height);
             }
