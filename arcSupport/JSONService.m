@@ -1,6 +1,6 @@
 #import "JSONService.h"
 
-#define RESPONSE_ENCODING @"application/json"
+#define JSON_MIME @"application/json"
 
 @implementation JSONService
 
@@ -28,7 +28,7 @@
         }
     };
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
-    [newHeaders setObject:RESPONSE_ENCODING forKey:@"Accept"];
+    [newHeaders setObject:JSON_MIME forKey:@"Accept"];
     [super requestWithURL:url
                    method:method
                   headers:newHeaders
@@ -46,7 +46,7 @@
        receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
-    [newHeaders setObject:RESPONSE_ENCODING forKey:@"Content-Type"];
+    [newHeaders setObject:JSON_MIME forKey:@"Content-Type"];
     [self requestWithURL:url
                   method:method
                  headers:newHeaders
@@ -67,7 +67,7 @@
         bodyData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
     }
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
-    [newHeaders setObject:RESPONSE_ENCODING forKey:@"Content-Type"];
+    [newHeaders setObject:JSON_MIME forKey:@"Content-Type"];
     if (error){
     	errorHandler(error);
     } else {
