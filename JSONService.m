@@ -75,7 +75,7 @@
          errorHandler:(void (^)(NSError*))errorHandler {
     NSError *error = nil;
     NSData *bodyData = nil;
-    if ([[self class] iOS5JSONSerialization]) {
+    if ([[self class] iOS5JSONSerialization] && body) {
       bodyData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
     } else {
       bodyData = [[body JSONRepresentation] dataUsingEncoding:NSUTF8StringEncoding];
