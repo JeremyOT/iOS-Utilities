@@ -62,7 +62,7 @@
     [self requestWithURL:url
                   method:method
                  headers:newHeaders
-                    body:body ? [NSMutableData dataWithData:[body dataUsingEncoding:NSUTF8StringEncoding]] : nil
+                    body:body ? [body dataUsingEncoding:NSUTF8StringEncoding] : nil
           receiveHandler:receiveHandler
             errorHandler:errorHandler];
 }
@@ -82,26 +82,15 @@
     }
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
     [newHeaders setObject:JSON_MIME forKey:@"Content-Type"];
-    if (bodyData) {
+    if (error) {
+	errorHandler(error);
+    } else {
         [self requestWithURL:url
                       method:method
                      headers:newHeaders
                         body:bodyData
               receiveHandler:receiveHandler
                 errorHandler:errorHandler];
-    } else {
-    	if(body){
-	    	//body serialization failed
-	        errorHandler(error);
-	    }else{
-	    	//nil body, pass through
-	        [self requestWithURL:url
-    	                  method:method
-        	             headers:newHeaders
-            	            body:nil
-            	  receiveHandler:receiveHandler
-                	errorHandler:errorHandler];	    	
-	    }
     }
 }
 
