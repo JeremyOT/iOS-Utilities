@@ -1,10 +1,13 @@
 #import "JSONService.h"
 
+#define RESPONSE_ENCODING @"application/json"
+
 @implementation JSONService
 
 + (JSONService*)service{
-	return [[JSONService alloc] init] ;
+	return [[JSONService alloc] init];
 }
+
 
 -(void)requestWithURL:(NSURL*)url
                method:(NSString*)method
@@ -25,7 +28,7 @@
         }
     };
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
-    [newHeaders setObject:@"application/json" forKey:@"Accept"];
+    [newHeaders setObject:RESPONSE_ENCODING forKey:@"Accept"];
     [super requestWithURL:url
                    method:method
                   headers:newHeaders
@@ -43,11 +46,11 @@
        receiveHandler:(void (^)(id, NSNumber*, NSDictionary*))receiveHandler
          errorHandler:(void (^)(NSError*))errorHandler {
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
-    [newHeaders setObject:@"application/json" forKey:@"Content-Type"];
+    [newHeaders setObject:RESPONSE_ENCODING forKey:@"Content-Type"];
     [self requestWithURL:url
                   method:method
                  headers:newHeaders
-                    body:[NSMutableData dataWithData:[body dataUsingEncoding:NSUTF8StringEncoding]]
+                    body:(body ? [NSMutableData dataWithData:[body dataUsingEncoding:NSUTF8StringEncoding]] : nil)
           receiveHandler:receiveHandler
             errorHandler:errorHandler];
 }
@@ -60,9 +63,11 @@
          errorHandler:(void (^)(NSError*))errorHandler {
     NSError *error = nil;
     NSData *bodyData = nil;
-    bodyData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
+    if (body) {
+        bodyData = [NSJSONSerialization dataWithJSONObject:body options:0 error:&error];
+    }
     NSMutableDictionary *newHeaders = [NSMutableDictionary dictionaryWithDictionary:headers];
-    [newHeaders setObject:@"application/json" forKey:@"Content-Type"];
+    [newHeaders setObject:RESPONSE_ENCODING forKey:@"Content-Type"];
     if (bodyData) {
         [self requestWithURL:url
                       method:method
@@ -71,7 +76,18 @@
               receiveHandler:receiveHandler
                 errorHandler:errorHandler];
     } else {
-        errorHandler(error);
+        if (body) {
+            //body failed to serialize
+            errorHandler(error);
+        }else{
+            //body was nil, pass through
+            [self requestWithURL:url
+                          method:method
+                         headers:newHeaders
+                            body:nil
+                  receiveHandler:receiveHandler
+                    errorHandler:errorHandler];            
+        }
     }
 }
 
